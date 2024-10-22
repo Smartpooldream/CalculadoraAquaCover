@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Economia Aqua Cover</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            margin-top: 50px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e90ff;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            background-color: #1e90ff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #187bcd;
+        }
+
+        .economy-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .economy-list li {
+            background-color: #f0f8ff;
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #1e90ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .economy-list li .label {
+            font-weight: bold;
+            color: #1e90ff;
+        }
+
+        .economy-list li .value {
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .highlight-roxo {
+            background-color: #e6e6fa;
+            border-color: #8a2be2;
+        }
+
+        .highlight-roxo .label {
+            color: #8a2be2;
+        }
+
+        .total-savings {
+            background-color: #f0fff0;
+            border-color: #32cd32;
+        }
+
+        .total-savings .label {
+            color: #32cd32;
+        }
+
+        .total-savings .value {
+            color: #228b22;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculadora de Economia Aqua Cover</h1>
+        
+        <!-- Entrada de tamanho de piscina -->
+        <label for="poolSize">Digite o Tamanho da Piscina (em m³):</label>
+        <input type="number" id="poolSize" placeholder="Exemplo: 560" />
+
+        <!-- Seletor de tipo de capa -->
+        <label for="coverType">Você usa capa plástica?</label>
+        <select id="coverType">
+            <option value="none">Sem capa</option>
+            <option value="plastic">Capa plástica</option>
+        </select>
+
+        <!-- Botão de cálculo -->
+        <button onclick="calculateSavings()">Calcular Economia</button>
+
+        <!-- Exibição dos resultados -->
+        <div class="result">
+            <h2>Resultado da Economia</h2>
+            <div id="economyResult"></div>
+        </div>
+    </div>
+
+    <!-- Script para o cálculo da economia -->
+    <script>
+        // Função de interpolação linear
+        function interpolate(x, x1, y1, x2, y2) {
+            return y1 + ((x - x1) * (y2 - y1)) / (x2 - x1);
+        }
+
+        // Função para calcular a economia com base no tamanho da piscina personalizado
+        function calculateSavings() {
+            var poolSize = document.getElementById("poolSize").value;
+            var coverType = document.getElementById("coverType").value;
+
+            // Dados para os cálculos (valores fornecidos)
+            var data = {
+                "none": {
+                    "100": { evap: 2250, energy: 25771, chemicals: 2760, employee: 0 },
+                    "200": { evap: 4500, energy: 62400, chemicals: 5520, employee: 0 },
+                    "500": { evap: 11250, energy: 156000, chemicals: 13800, employee: 0 },
+                    "1000": { evap: 22500, energy: 312000, chemicals: 27600, employee: 0 },
+                    "2500": { evap: 56250, energy: 702000, chemicals: 69000, employee: 0 }
+                },
+                "plastic": {
+                    "100": { evap: 1500, energy: 19824, chemicals: 2300, employee: 4000, cover: 1600 },
+                    "200": { evap: 3000, energy: 48000, chemicals: 4600, employee: 8000, cover: 3300 },
+                    "500": { evap: 7500, energy: 120000, chemicals: 11500, employee: 20000, cover: 8300 },
+                    "1000": { evap: 15000, energy: 240000, chemicals: 23000, employee: 38000, cover: 16600 },
+                    "2500": { evap: 37500, energy: 540000, chemicals: 57500, employee: 80000, cover: 41600 }
+                }
+            };
+
+            var aquaCover = {
+                "100": { evap: 750, energy: 13877, chemicals: 1610, cost: 5300 },
+                "200": { evap: 1500, energy: 33600, chemicals: 3220, cost: 10800 },
+                "500": { evap: 3750, energy: 84000, chemicals: 8050, cost: 21300 },
+                "1000": { evap: 7500, energy: 168000, chemicals: 16100, cost: 39000 },
+                "2500": { evap: 18750, energy: 378000, chemicals: 40250, cost: 94000 }
+            };
+
+            // Função auxiliar para encontrar o intervalo de tamanhos
+            function findClosestValues(size, dataset) {
+                var keys = Object.keys(dataset).map(Number);
+                var lower = keys[0];
+                var upper = keys[keys.length - 1];
+                
+                for (var i = 0; i < keys.length; i++) {
+                    if (size <= keys[i]) {
+                        upper = keys[i];
+                        lower = keys[i - 1] || keys[i];
+                        break;
+                    }
+                }
+                return { lower: lower, upper: upper };
+            }
+
+            // Obter os valores de comparação para o tamanho da piscina
+            var currentRange = findClosestValues(poolSize, data[coverType]);
+            var aquaRange = findClosestValues(poolSize, aquaCover);
+
+            // Função para calcular os valores interpolados
+            function calculateInterpolatedValues(size, range, dataset, isAquaCover = false) {
+                var lower = range.lower;
+                var upper = range.upper;
+
+                var values = dataset[lower];
+                if (lower !== upper) {
+                    return {
+                        evap: interpolate(size, lower, values.evap, upper, dataset[upper].evap),
+                        energy: interpolate(size, lower, values.energy, upper, dataset[upper].energy),
+                        chemicals: interpolate(size, lower, values.chemicals, upper, dataset[upper].chemicals),
+                        employee: interpolate(size, lower, values.employee, upper, dataset[upper].employee),
+                        cover: isAquaCover ? 0 : interpolate(size, lower, values.cover, upper, dataset[upper].cover),
+                        cost: isAquaCover ? values.cost : 0
+                    };
+                }
+                return values;
+            }
+
+            // Calcular valores atuais e com Aqua Cover
+            var currentData = calculateInterpolatedValues(poolSize, currentRange, data[coverType]);
+            var aquaData = calculateInterpolatedValues(poolSize, aquaRange, aquaCover, true);
+
+            // Calcular a economia
+            var savingsEvap = currentData.evap - aquaData.evap;
+            var savingsEnergy = currentData.energy - aquaData.energy;
+            var savingsChemicals = currentData.chemicals - aquaData.chemicals;
+            var savingsEmployee = coverType === "plastic" ? currentData.employee : 0;
+            var savingsCover = coverType === "plastic" ? currentData.cover : 0;
+            var totalSavings = savingsEvap + savingsEnergy + savingsChemicals + savingsEmployee + savingsCover - aquaData.cost;
+
+            // Exibir os resultados em lista compacta
+            var resultText = `
+                <ul class="economy-list">
+                    <li>
+                        <span class="label">Economia na Evaporação:</span>
+                        <span class="value">R$ ${Math.round(savingsEvap).toLocaleString()}</span>
+                    </li>
+                    <li>
+                        <span class="label">Economia de Energia:</span>
+                        <span class="value">R$ ${Math.round(savingsEnergy).toLocaleString()}</span>
+                    </li>
+                    <li>
+                        <span class="label">Economia com Químicos:</span>
+                        <span class="value">R$ ${Math.round(savingsChemicals).toLocaleString()}</span>
+                    </li>
+                    ${savingsEmployee > 0 ? `
+                    <li>
+                        <span class="label">Economia com Funcionário:</span>
+                        <span class="value">R$ ${Math.round(savingsEmployee).toLocaleString()}</span>
+                    </li>` : ''}
+                    ${savingsCover > 0 ? `
+                    <li>
+                        <span class="label">Economia com Capa Plástica:</span>
+                        <span class="value">R$ ${Math.round(savingsCover).toLocaleString()}</span>
+                    </li>` : ''}
+                    <li class="highlight-roxo">
+                        <span class="label">Investimento no Aqua Cover:</span>
+                        <span class="value">R$ ${Math.round(aquaData.cost).toLocaleString()}</span>
+                    </li>
+                    <li class="total-savings">
+                        <span class="label">Economia Total:</span>
+                        <span class="value">R$ ${Math.round(totalSavings).toLocaleString()}</span>
+                    </li>
+                </ul>
+            `;
+
+            document.getElementById("economyResult").innerHTML = resultText;
+        }
+    </script>
+</body>
+</html>
